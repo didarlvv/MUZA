@@ -3,6 +3,7 @@
 import type React from "react";
 import { createContext, useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import StorageService from "@/utils/storage";
 
 interface Restaurant {
   id: number;
@@ -42,15 +43,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    const storedSelectedRestaurant = localStorage.getItem("selectedRestaurant");
+    const token = StorageService.getItem("token");
+    const storedUser = StorageService.getItem("user");
+    const storedSelectedRestaurant =
+      StorageService.getItem("selectedRestaurant");
     console.log(storedUser);
     console.log(storedSelectedRestaurant);
 
     if (token && storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
+      if (token) {
+        document.cookie = `token=${token}; path=/`;
+      }
+      if (parsedUser) {
+        document.cookie = `user=${JSON.stringify(parsedUser)}; path=/`;
+      }
 
       if (storedSelectedRestaurant) {
         setSelectedRestaurant(JSON.parse(storedSelectedRestaurant));
@@ -63,12 +71,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [router]);
 
   const login = (token: string, user: User) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+    StorageService.setItem("token", token);
+    StorageService.setItem("user", JSON.stringify(user));
     setUser(user);
     if (user.restaurants && user.restaurants.length > 0) {
       setSelectedRestaurant(user.restaurants[0]);
-      localStorage.setItem(
+      StorageService.setItem(
         "selectedRestaurant",
         JSON.stringify(user.restaurants[0])
       );
@@ -76,9 +84,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("selectedRestaurant");
+    StorageService.removeItem("token");
+    StorageService.removeItem("user");
+    StorageService.removeItem("selectedRestaurant");
     setUser(null);
     setSelectedRestaurant(null);
     router.push("/login");
@@ -87,9 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateSelectedRestaurant = (restaurant: Restaurant | null) => {
     setSelectedRestaurant(restaurant);
     if (restaurant) {
-      localStorage.setItem("selectedRestaurant", JSON.stringify(restaurant));
+      StorageService.setItem("selectedRestaurant", JSON.stringify(restaurant));
     } else {
-      localStorage.removeItem("selectedRestaurant");
+      StorageService.removeItem("selectedRestaurant");
     }
   };
 

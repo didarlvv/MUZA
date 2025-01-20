@@ -1,36 +1,64 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { orderApi } from '@/lib/api'
-import { Order } from '../../types/api'
-import { RestaurantLayout } from "@/components/restaurant-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from "react";
+import { orderApi } from "@/lib/api";
+import { Order } from "../../types/api";
+import { RestaurantLayout } from "@/components/restaurant-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import StorageService from "@/utils/storage";
+
+export const dynamic = "force-dynamic";
 
 export default function RestaurantDashboard() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    setToken(StorageService.getItem("token"));
+    setUser(StorageService.getItem("user"));
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const ordersData = await orderApi.getOrders()
-      setOrders(ordersData.filter((order: Order) => order.restaurantId === user.restaurantId))
-    }
-    fetchOrders()
-  }, [user.restaurantId])
+      const ordersData = await orderApi.getOrders();
+      setOrders(
+        ordersData.filter(
+          (order: Order) => order.restaurantId === user?.restaurantId
+        )
+      );
+    };
+    fetchOrders();
+  }, [user?.restaurantId]);
 
-  const handleStatusUpdate = async (orderId: string, status: Order['status']) => {
-    await orderApi.updateOrder(orderId, { status })
-    setOrders(orders.map(order => 
-      order.id === orderId ? { ...order, status } : order
-    ))
+  const handleStatusUpdate = async (
+    orderId: string,
+    status: Order["status"]
+  ) => {
+    await orderApi.updateOrder(orderId, { status });
+    setOrders(
+      orders.map((order) =>
+        order.id === orderId ? { ...order, status } : order
+      )
+    );
+  };
+
+  if (!token || !user) {
+    return <div>Loading...</div>;
   }
 
   return (
     <RestaurantLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Управление заказами</h1>
-        
+
         <div className="grid gap-6">
           {orders.map((order) => (
             <Card key={order.id}>
@@ -46,18 +74,26 @@ export default function RestaurantDashboard() {
                     <div className="space-y-2 mt-2">
                       {order.items.map((item) => (
                         <div key={item.id} className="flex justify-between">
-                          <span>{item.name} x{item.quantity}</span>
+                          <span>
+                            {item.name} x{item.quantity}
+                          </span>
                           <span>${item.price * item.quantity}</span>
                         </div>
                       ))}
                     </div>
                     <p className="font-bold mt-4">
-                      Итого: ${order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)}
+                      Итого: $
+                      {order.items.reduce(
+                        (sum, item) => sum + item.price * item.quantity,
+                        0
+                      )}
                     </p>
                   </div>
                   <Select
                     value={order.status}
-                    onValueChange={(value) => handleStatusUpdate(order.id, value as Order['status'])}
+                    onValueChange={(value) =>
+                      handleStatusUpdate(order.id, value as Order["status"])
+                    }
                   >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Статус" />
@@ -76,6 +112,5 @@ export default function RestaurantDashboard() {
         </div>
       </div>
     </RestaurantLayout>
-  )
+  );
 }
-

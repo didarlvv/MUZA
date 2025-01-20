@@ -15,6 +15,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Logo } from "./Logo";
+import StorageService from "@/utils/storage";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function LoginForm() {
   useEffect(() => {
     if (loginSuccess) {
       const redirectTimer = setTimeout(() => {
-        const userRole = localStorage.getItem("userRole");
+        const userRole = StorageService.getItem("userRole");
         console.log("Attempting redirect based on role:", userRole);
         if (userRole === "admin") {
           console.log("Redirecting to admin dashboard");
@@ -84,7 +85,7 @@ export default function LoginForm() {
         restaurants: userData.restaurants,
       })}; path=/;`;
 
-      localStorage.setItem("userRole", userData.role);
+      StorageService.setItem("userRole", userData.role);
       console.log("Cookies and localStorage set");
 
       setLoginSuccess(true);
